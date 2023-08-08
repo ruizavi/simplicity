@@ -1,0 +1,31 @@
+@url = http://localhost:3000
+
+POST {{url}}/collections
+Content-Type: application/json
+
+{
+    "name": "test",
+    "schema": [
+        {
+            "name": "name",
+            "type": "text",
+            "options": {
+                "max": 50,
+                "min": 5,
+                "unique": true,
+                "required": true
+            }
+        },
+        {
+            "name": "first_name",
+            "type": "text",
+            "options": {
+                "max": 50,
+                "min": 0,
+                "unique": false,
+                "required": false
+            }
+        }
+    ]
+}   
+
