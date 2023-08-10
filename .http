@@ -1,4 +1,4 @@
-@url = http://localhost:3000
+@url = http://localhost:5000/api
 
 POST {{url}}/collections
 Content-Type: application/json
@@ -29,3 +29,5 @@ Content-Type: application/json
     ]
 }   
 
+###
+GET {{url}}/collections/test/records

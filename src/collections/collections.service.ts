@@ -37,8 +37,8 @@ export class CollectionsService {
     CREATE TABLE ${schema.name} (
       collectionId INT,
       id INT AUTO_INCREMENT, 
-      created TIMESTAMP,
-      updated TIMESTAMP,
+      created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       ${columns.join(',\n')},
       PRIMARY KEY (id),
       FOREIGN KEY (collectionId) REFERENCES _collections(id)
@@ -51,5 +51,32 @@ export class CollectionsService {
       }),
       this.prisma.$executeRaw(Prisma.sql([query])),
     ]);
+  }
+
+  async getRecords(collection: string) {
+    const collectionFound = await this.prisma.collection.findUnique({
+      where: { name: collection },
+    });
+
+    if (!collectionFound)
+      throw new HttpException('No existe perro', HttpStatus.BAD_REQUEST);
+
+    if (
+      typeof collectionFound.schema === 'object' &&
+      Array.isArray(collectionFound.schema)
+    ) {
+      const schema = collectionFound.schema.map(
+        (s) => `${collection}.${s['name']}`,
+      );
+
+      const query = `SELECT 
+      collectionId, id, created, updated, 
+      ${schema.join(',')} 
+      FROM ${collectionFound.name} AS ${collection}`;
+
+      return await this.prisma.$queryRaw(Prisma.sql([query]));
+    }
+
+    return 'adios';
   }
 }

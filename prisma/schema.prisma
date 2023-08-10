@@ -12,7 +12,7 @@ datasource db {
 
 model Collection {
   id     Int    @id @default(autoincrement())
-  name   String
+  name   String @unique
   schema Json
 
   @@map("_collections")
