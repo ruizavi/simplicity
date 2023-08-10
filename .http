@@ -31,3 +31,12 @@ Content-Type: application/json
 
 ###
 GET {{url}}/collections/test/records
+
+
+###
+POST {{url}}/collections/test/records
+Content-Type: application/json
+
+{
+    "name": "adios"
+}

@@ -79,4 +79,29 @@ export class CollectionsService {
 
     return 'adios';
   }
+
+  async createRecord(collection: string, fields: unknown) {
+    const collectionFound = await this.prisma.collection.findUnique({
+      where: { name: collection },
+    });
+
+    if (!collectionFound)
+      throw new HttpException('No existe perro', HttpStatus.BAD_REQUEST);
+
+    const schema = collectionFound.schema as Prisma.JsonArray;
+
+    if (typeof fields === 'object') {
+      const record = Object.keys(fields)
+        .flatMap((f) =>
+          schema.map((s) =>
+            s['name'] === f ? { [s['name']]: fields[f] } : undefined,
+          ),
+        )
+        .filter((f) => f !== undefined);
+
+      return record;
+    }
+
+    return 'adios';
+  }
 }
