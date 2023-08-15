@@ -23,6 +23,9 @@ dependencies:
   rxjs:
     specifier: ^7.8.1
     version: 7.8.1
+  zod:
+    specifier: ^3.22.0
+    version: 3.22.0
 
 devDependencies:
   '@nestjs/cli':
@@ -5231,3 +5234,7 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
     dev: true
+
+  /zod@3.22.0:
+    resolution: {integrity: sha512-y5KZY/ssf5n7hCGDGGtcJO/EBJEm5Pa+QQvFBeyMOtnFYOSflalxIFFvdaYevPhePcmcKC4aTbFkCcXN7D0O8Q==}
+    dev: false
