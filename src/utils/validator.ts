@@ -1,19 +1,23 @@
-import { z } from "zod";
+import { ZodOptional, ZodString, z } from 'zod';
 
 export const generateSchemaValidator = (schema: unknown[]) => {
   let schemaShape = {};
 
   schema.forEach((s) => {
     if (s['type'] === 'text') {
-      let fieldValidator = z.string();
+      let fieldValidator: ZodString | ZodOptional<ZodString> = z.string();
+
       if (s['options']['min'] !== undefined)
         fieldValidator = fieldValidator.min(s['options']['min']);
 
       if (s['options']['max'] !== undefined)
         fieldValidator = fieldValidator.max(s['options']['max']);
 
-      if (s['options']['required'] !== undefined)
+      if (s['options']['required']) {
         fieldValidator = fieldValidator.nonempty();
+      } else {
+        fieldValidator = fieldValidator.optional();
+      }
 
       schemaShape[s['name']] = fieldValidator;
     }
