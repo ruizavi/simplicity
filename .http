@@ -12,6 +12,7 @@ Content-Type: application/json
             "options": {
                 "max": 50,
                 "min": 5,
+                "regex": "^[a-z]*$",
                 "unique": false,
                 "required": true
             }
@@ -42,10 +43,7 @@ POST {{url}}/collections/test/records
 Content-Type: application/json
 
 {
-    "name": "holaaaaaaaaaaa",
-    "first_name": "mundo",
-    "test": "test",
-    "hola": "mundo"
+    "name": "holaaaaaaaaaaa"
 }
 
 ###

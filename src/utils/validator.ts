@@ -13,6 +13,11 @@ export const generateSchemaValidator = (schema: unknown[]) => {
       if (s['options']['max'] !== undefined)
         fieldValidator = fieldValidator.max(s['options']['max']);
 
+      if (s['options']['regex'] !== undefined)
+        fieldValidator = fieldValidator.regex(
+          new RegExp(s['options']['regex']),
+        );
+
       if (s['options']['required']) {
         fieldValidator = fieldValidator.nonempty();
       } else {
