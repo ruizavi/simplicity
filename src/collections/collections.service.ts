@@ -1,8 +1,12 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { generateSchemaValidator } from 'src/utils/validator';
+import {
+  generateSchemaCreatValidator,
+  generateSchemaUpdateValidator,
+} from 'src/utils/validator';
 import { format } from 'date-fns';
+import e from 'express';
 
 @Injectable()
 export class CollectionsService {
@@ -115,31 +119,35 @@ export class CollectionsService {
 
     const schema = collectionFound.schema as Prisma.JsonArray;
 
-    const validate = generateSchemaValidator(schema);
+    const validate = generateSchemaCreatValidator(schema);
 
-    const data = validate.parse(fields);
+    try {
+      const data = validate.parse(fields);
 
-    const columns = Object.keys(data);
+      const columns = Object.keys(data);
 
-    const values = Object.values(data).map((v) => {
-      if (typeof v === 'number') return v;
+      const values = Object.values(data).map((v) => {
+        if (typeof v === 'number') return v;
 
-      return `'${v}'`;
-    });
+        return `'${v}'`;
+      });
 
-    const execute = `
-    INSERT INTO ${collectionFound.name} (collectionId, ${columns.join(',')})
-    VALUES
-    (${collectionFound.id},${values.join(',')})
-    `;
+      const execute = `
+  INSERT INTO ${collectionFound.name} (collectionId, ${columns.join(',')})
+  VALUES
+  (${collectionFound.id},${values.join(',')})
+  `;
 
-    await this.prisma.$executeRaw(Prisma.sql([execute]));
+      await this.prisma.$executeRaw(Prisma.sql([execute]));
 
-    const query = `SELECT * FROM ${collectionFound.name} ORDER BY created DESC LIMIT 1`;
+      const query = `SELECT * FROM ${collectionFound.name} ORDER BY created DESC LIMIT 1`;
 
-    const row = await this.prisma.$queryRaw(Prisma.sql([query]));
+      const row = await this.prisma.$queryRaw(Prisma.sql([query]));
 
-    return row[0];
+      return row[0];
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   async deleteRecord(collection: string, id: number) {
@@ -163,5 +171,54 @@ export class CollectionsService {
     const row = await this.prisma.$queryRaw(Prisma.sql([query]));
 
     return row[0];
+  }
+
+  async updateRecord(collection: string, id: number, fields: unknown) {
+    const collectionFound = await this.prisma.collection.findUnique({
+      where: { name: collection },
+    });
+
+    if (!collectionFound)
+      throw new HttpException('Collection not found', HttpStatus.BAD_REQUEST);
+
+    const schema = collectionFound.schema as Prisma.JsonArray;
+
+    const query = `SELECT * FROM ${collectionFound.name} as ${collectionFound.name} WHERE ${collectionFound.name}.id = ${id}`;
+
+    const queryResult = await this.prisma.$queryRaw(Prisma.sql([query]));
+
+    if (Array.isArray(queryResult) && queryResult.length === 0)
+      throw new HttpException('Record not found', HttpStatus.NOT_FOUND);
+
+    const validator = generateSchemaUpdateValidator(schema);
+
+    try {
+      const data = validator.parse(fields);
+
+      const fieldsUpdated = Object.keys(data).map((key) => {
+        return typeof data[key] === 'number'
+          ? `${collectionFound.name}.${key} = ${data[key]}`
+          : `${collectionFound.name}.${key} = '${data[key]}'`;
+      });
+
+      const execute = `
+  UPDATE ${collectionFound.name} as ${
+    collectionFound.name
+  } SET ${fieldsUpdated.join(', ')}, ${
+    collectionFound.name
+  }.updated = '${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}' WHERE ${
+    collectionFound.name
+  }.id = ${id}`;
+
+      await this.prisma.$executeRaw(Prisma.sql([execute]));
+
+      const query = `SELECT * FROM ${collectionFound.name} WHERE ${collectionFound.name}.id = ${id}`;
+
+      const row = await this.prisma.$queryRaw(Prisma.sql([query]));
+
+      return row[0];
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }

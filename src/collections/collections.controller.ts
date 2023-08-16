@@ -9,6 +9,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Put,
 } from '@nestjs/common';
 import { CollectionsService } from './collections.service';
 
@@ -49,5 +50,14 @@ export class CollectionsController {
     @Param('id', new ParseIntPipe()) id: number,
   ) {
     return this.service.deleteRecord(collection, id);
+  }
+
+  @Put(':collection/records/:id')
+  async updateRecord(
+    @Param('collection') collection: string,
+    @Param('id', new ParseIntPipe()) id: number,
+    @Body() fields: unknown,
+  ) {
+    return this.service.updateRecord(collection, id, fields);
   }
 }

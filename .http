@@ -4,7 +4,7 @@ POST {{url}}/collections
 Content-Type: application/json
 
 {
-    "name": "test",
+    "name": "spaces",
     "schema": [
         {
             "name": "name",
@@ -12,7 +12,7 @@ Content-Type: application/json
             "options": {
                 "max": 50,
                 "min": 5,
-                "regex": "^[a-z]*$",
+                "regex": "^[a-z\\s]*$",
                 "unique": false,
                 "required": true
             }
@@ -31,7 +31,7 @@ Content-Type: application/json
 }   
 
 ###
-GET {{url}}/collections/test/records
+GET {{url}}/collections/testwithregex/records
 
 
 ###
@@ -39,11 +39,20 @@ GET {{url}}/collections/test/records/2
 
 
 ###
-POST {{url}}/collections/test/records
+POST {{url}}/collections/testwithregex/records
 Content-Type: application/json
 
 {
-    "name": "holaaaaaaaaaaa"
+    "name": "adiossss"
+}
+
+###
+PUT {{url}}/collections/testwithregex/records/2
+Content-Type: application/json
+
+{
+    "name":"prueba para editar mas clara",
+    "first_name": "esta es la otra prueba"
 }
 
 ###
