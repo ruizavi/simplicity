@@ -12,7 +12,7 @@ Content-Type: application/json
             "options": {
                 "max": 50,
                 "min": 5,
-                "unique": true,
+                "unique": false,
                 "required": true
             }
         },
@@ -47,3 +47,6 @@ Content-Type: application/json
     "test": "test",
     "hola": "mundo"
 }
+
+###
+DELETE {{url}}/collections/test/records/5

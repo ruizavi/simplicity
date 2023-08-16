@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpException,
@@ -17,7 +18,7 @@ export class CollectionsController {
 
   @Post()
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async create(@Body() schema: any) {
+  async create(@Body() schema: unknown) {
     return this.service.createTable(schema);
   }
 
@@ -31,7 +32,7 @@ export class CollectionsController {
     @Param('collection') collection: string,
     @Param('id', new ParseIntPipe()) id: number,
   ) {
-    return this.service.getRecord(collection, id)
+    return this.service.getRecord(collection, id);
   }
 
   @Post(':collection/records')
@@ -40,5 +41,13 @@ export class CollectionsController {
     @Body() fields: unknown,
   ) {
     return this.service.createRecord(collection, fields);
+  }
+
+  @Delete(':collection/records/:id')
+  async deleteRecord(
+    @Param('collection') collection: string,
+    @Param('id', new ParseIntPipe()) id: number,
+  ) {
+    return this.service.deleteRecord(collection, id);
   }
 }

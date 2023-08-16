@@ -1,18 +1,16 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { share } from 'rxjs';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { generateSchemaValidator } from 'src/utils/validator';
-import { z } from 'zod';
+import { format } from 'date-fns';
 
 @Injectable()
 export class CollectionsService {
   constructor(private prisma: PrismaService) {}
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async createTable(schema: any) {
+  async createTable(schema: unknown) {
     const collection = await this.prisma.collection.findMany({
-      where: { name: schema.name as string },
+      where: { name: schema['name'] as string },
     });
 
     if (collection.length !== 0)
@@ -20,7 +18,7 @@ export class CollectionsService {
 
     const columns = [];
 
-    schema.schema.forEach((s: any) => {
+    schema['schema'].forEach((s: any) => {
       let type = '';
 
       if (s.type === 'text') {
@@ -37,11 +35,12 @@ export class CollectionsService {
     });
 
     const query = `
-    CREATE TABLE ${schema.name} (
+    CREATE TABLE ${schema['name']} (
       collectionId INT NOT NULL,
       id INT AUTO_INCREMENT, 
       created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      deleted TIMESTAMP,
       ${columns.join(',\n')},
       PRIMARY KEY (id),
       FOREIGN KEY (collectionId) REFERENCES _collections(id)
@@ -50,7 +49,7 @@ export class CollectionsService {
 
     await this.prisma.$transaction([
       this.prisma.collection.create({
-        data: { schema: schema.schema, name: schema.name },
+        data: { schema: schema['schema'], name: schema['name'] },
       }),
       this.prisma.$executeRaw(Prisma.sql([query])),
     ]);
@@ -69,7 +68,7 @@ export class CollectionsService {
     const columns = schema.map((s) => `${collection}.${s['name']}`);
 
     const query = `SELECT 
-    collectionId, id, created, updated, 
+    collectionId, id, created, updated, deleted,
     ${columns.join(',')} 
     FROM ${collectionFound.name} AS ${collection}`;
 
@@ -89,7 +88,7 @@ export class CollectionsService {
     const columns = schema.map((s) => `${collection}.${s['name']}`);
 
     const query = `SELECT 
-    collectionId, id, created, updated, 
+    collectionId, id, created, updated, deleted, 
     ${columns.join(',')} 
     FROM ${collectionFound.name} AS ${collection} WHERE ${
       collectionFound.name
@@ -137,6 +136,29 @@ export class CollectionsService {
     await this.prisma.$executeRaw(Prisma.sql([execute]));
 
     const query = `SELECT * FROM ${collectionFound.name} ORDER BY created DESC LIMIT 1`;
+
+    const row = await this.prisma.$queryRaw(Prisma.sql([query]));
+
+    return row[0];
+  }
+
+  async deleteRecord(collection: string, id: number) {
+    const collectionFound = await this.prisma.collection.findUnique({
+      where: { name: collection },
+    });
+
+    if (!collectionFound)
+      throw new HttpException('Collection not found', HttpStatus.BAD_REQUEST);
+
+    const remove = `UPDATE ${collectionFound.name} as ${
+      collectionFound.name
+    } SET deleted = '${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}' WHERE ${
+      collectionFound.name
+    }.id = ${id}`;
+
+    await this.prisma.$executeRaw(Prisma.sql([remove]));
+
+    const query = `SELECT * FROM ${collectionFound.name} as ${collectionFound.name} WHERE ${collectionFound.name}.id = ${id}`;
 
     const row = await this.prisma.$queryRaw(Prisma.sql([query]));
 
