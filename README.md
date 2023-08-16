@@ -38,6 +38,13 @@ $ pnpm install
 # development
 $ pnpm run start
 
+# Modified .env with local variables
+
+# Config prisma
+$ pnpx prisma migrate dev --name init
+
+$ pnpx prisma generate
+
 # watch mode
 $ pnpm run start:dev
 
