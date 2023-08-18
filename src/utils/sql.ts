@@ -5,10 +5,7 @@ import {
   instanceOfTextType,
 } from './instanceOf';
 import { Collection, Prisma } from '@prisma/client';
-import {
-  generateSchemaCreatValidator,
-  generateSchemaUpdateValidator,
-} from './validator';
+import { generateSchemaValidator } from './validator';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { format } from 'date-fns';
 
@@ -66,10 +63,9 @@ export function getRecordBuild(collection: Collection, id: number) {
 }
 
 export function createRecordBuild(collection: Collection, fields: unknown) {
-  const schema = collection.schema as Prisma.JsonArray;
+  const schema = collection.schema as unknown as Schema[];
 
-  const validate = generateSchemaCreatValidator(schema);
-
+  const validate = generateSchemaValidator(schema, false);
   try {
     const data = validate.parse(fields);
 
@@ -107,9 +103,9 @@ export function updateRecordBuild(
   id: number,
   fields: unknown,
 ) {
-  const validator = generateSchemaUpdateValidator(
-    collection.schema as Prisma.JsonArray,
-  );
+  const schema = collection.schema as unknown as Schema[];
+
+  const validator = generateSchemaValidator(schema, true);
 
   try {
     const data = validator.parse(fields);

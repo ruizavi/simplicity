@@ -1,7 +1,7 @@
 export interface TextOption {
   min: number;
   max: number;
-  regex: string;
+  regex?: string;
 }
 
 export interface NumberOption {

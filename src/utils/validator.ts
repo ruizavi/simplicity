@@ -1,58 +1,39 @@
+import { Schema } from 'src/types';
 import { ZodOptional, ZodString, z } from 'zod';
+import { instanceOfTextType } from './instanceOf';
 
-export const generateSchemaCreatValidator = (schema: unknown[]) => {
-  let schemaShape = {};
+export const schemaTextValidator = (s: Schema, isUpdate: boolean) => {
+  if (!instanceOfTextType(s.options)) return;
 
-  schema.forEach((s) => {
-    if (s['type'] === 'text') {
-      let fieldValidator: ZodString | ZodOptional<ZodString> = z.string();
+  let fieldValidator: ZodString | ZodOptional<ZodString> = z
+    .string()
+    .min(s.options.min)
+    .max(s.options.max);
 
-      if (s['options']['min'] !== undefined)
-        fieldValidator = fieldValidator.min(s['options']['min']);
+  if (s.options.regex !== undefined)
+    fieldValidator = fieldValidator.regex(new RegExp(s.options.regex));
 
-      if (s['options']['max'] !== undefined)
-        fieldValidator = fieldValidator.max(s['options']['max']);
+  if (s.required && !isUpdate) {
+    fieldValidator = fieldValidator.nonempty();
+  } else {
+    fieldValidator = fieldValidator.optional();
+  }
 
-      if (s['options']['regex'] !== undefined)
-        fieldValidator = fieldValidator.regex(
-          new RegExp(s['options']['regex']),
-        );
-
-      if (s['options']['required']) {
-        fieldValidator = fieldValidator.nonempty();
-      } else {
-        fieldValidator = fieldValidator.optional();
-      }
-
-      schemaShape[s['name']] = fieldValidator;
-    }
-  });
-
-  return z.object(schemaShape);
+  return fieldValidator;
 };
 
-export const generateSchemaUpdateValidator = (schema: unknown[]) => {
+export const generateSchemaValidator = (
+  schema: Schema[],
+  isUpdate: boolean,
+) => {
   let schemaShape = {};
 
   schema.forEach((s) => {
-    if (s['type'] === 'text') {
-      let fieldValidator: ZodString | ZodOptional<ZodString> = z.string();
+    let fieldValidator: unknown;
 
-      if (s['options']['min'] !== undefined)
-        fieldValidator = fieldValidator.min(s['options']['min']);
+    if (s.type === 'text') fieldValidator = schemaTextValidator(s, isUpdate);
 
-      if (s['options']['max'] !== undefined)
-        fieldValidator = fieldValidator.max(s['options']['max']);
-
-      if (s['options']['regex'] !== undefined)
-        fieldValidator = fieldValidator.regex(
-          new RegExp(s['options']['regex']),
-        );
-
-      fieldValidator = fieldValidator.optional();
-
-      schemaShape[s['name']] = fieldValidator;
-    }
+    schemaShape[s.name] = fieldValidator;
   });
 
   return z.object(schemaShape);
