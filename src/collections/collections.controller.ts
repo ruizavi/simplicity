@@ -12,14 +12,14 @@ import {
   Put,
 } from '@nestjs/common';
 import { CollectionsService } from './collections.service';
+import { Collection, Schema } from 'src/types';
 
 @Controller('collections')
 export class CollectionsController {
   constructor(private service: CollectionsService) {}
 
   @Post()
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async create(@Body() schema: unknown) {
+  async create(@Body() schema: Collection) {
     return this.service.createTable(schema);
   }
 

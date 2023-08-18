@@ -6,97 +6,63 @@ import {
   generateSchemaUpdateValidator,
 } from 'src/utils/validator';
 import { format } from 'date-fns';
-import e from 'express';
+import { Collection } from 'src/types';
+import {
+  assocColumnType,
+  createRecordBuild,
+  deleteRecordBuild,
+  getLastRecordBuild,
+  getRecordBuild,
+  getRecordsBuild,
+  newTableBuild,
+  updateRecordBuild,
+} from 'src/utils/sql';
 
 @Injectable()
 export class CollectionsService {
   constructor(private prisma: PrismaService) {}
 
-  async createTable(schema: unknown) {
-    const collection = await this.prisma.collection.findMany({
-      where: { name: schema['name'] as string },
+  private async findCollection(name: string) {
+    const collection = await this.prisma.collection.findFirst({
+      where: { name: name },
     });
 
-    if (collection.length !== 0)
+    if (!collection)
       throw new HttpException('Already exist collection', HttpStatus.CONFLICT);
 
-    const columns = [];
+    return collection;
+  }
 
-    schema['schema'].forEach((s: any) => {
-      let type = '';
+  async createTable(collection: Collection) {
+    await this.findCollection(collection.name);
 
-      if (s.type === 'text') {
-        type = `VARCHAR(${s.options?.max || 255})`;
-      } else if (s.type === 'number') {
-        type = s.options.decimal === 0 ? 'INT' : `FLOAT`;
-      }
+    const columns = assocColumnType(collection.schema);
 
-      if (s.options.required) type += ' NOT NULL';
-
-      if (s.options.unique) type += ' UNIQUE';
-
-      columns.push(`${s.name} ${type}`);
-    });
-
-    const query = `
-    CREATE TABLE ${schema['name']} (
-      collectionId INT NOT NULL,
-      id INT AUTO_INCREMENT, 
-      created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      deleted TIMESTAMP,
-      ${columns.join(',\n')},
-      PRIMARY KEY (id),
-      FOREIGN KEY (collectionId) REFERENCES _collections(id)
-      );
-      `;
+    const executeRaw = newTableBuild(collection.name, columns);
 
     await this.prisma.$transaction([
       this.prisma.collection.create({
-        data: { schema: schema['schema'], name: schema['name'] },
+        data: {
+          schema: collection.schema as unknown as Prisma.InputJsonValue,
+          name: collection.name,
+        },
       }),
-      this.prisma.$executeRaw(Prisma.sql([query])),
+      this.prisma.$executeRaw(Prisma.sql([executeRaw])),
     ]);
   }
 
   async getRecords(collection: string) {
-    const collectionFound = await this.prisma.collection.findUnique({
-      where: { name: collection },
-    });
+    const collectionFound = await this.findCollection(collection);
 
-    if (!collectionFound)
-      throw new HttpException('No existe perro', HttpStatus.BAD_REQUEST);
-
-    const schema = collectionFound.schema as Prisma.JsonArray;
-
-    const columns = schema.map((s) => `${collection}.${s['name']}`);
-
-    const query = `SELECT 
-    collectionId, id, created, updated, deleted,
-    ${columns.join(',')} 
-    FROM ${collectionFound.name} AS ${collection}`;
+    const query = getRecordsBuild(collectionFound);
 
     return await this.prisma.$queryRaw(Prisma.sql([query]));
   }
 
   async getRecord(collection: string, id: number) {
-    const collectionFound = await this.prisma.collection.findUnique({
-      where: { name: collection },
-    });
+    const collectionFound = await this.findCollection(collection);
 
-    if (!collectionFound)
-      throw new HttpException('No existe perro', HttpStatus.BAD_REQUEST);
-
-    const schema = collectionFound.schema as Prisma.JsonArray;
-
-    const columns = schema.map((s) => `${collection}.${s['name']}`);
-
-    const query = `SELECT 
-    collectionId, id, created, updated, deleted, 
-    ${columns.join(',')} 
-    FROM ${collectionFound.name} AS ${collection} WHERE ${
-      collectionFound.name
-    }.id = ${id}`;
+    const query = getRecordBuild(collectionFound, id);
 
     const row = await this.prisma.$queryRaw(Prisma.sql([query]));
 
@@ -110,63 +76,27 @@ export class CollectionsService {
   }
 
   async createRecord(collection: string, fields: unknown) {
-    const collectionFound = await this.prisma.collection.findUnique({
-      where: { name: collection },
-    });
+    const collectionFound = await this.findCollection(collection);
 
-    if (!collectionFound)
-      throw new HttpException('Collection not found', HttpStatus.BAD_REQUEST);
+    const execute = createRecordBuild(collectionFound, fields);
 
-    const schema = collectionFound.schema as Prisma.JsonArray;
+    const query = getLastRecordBuild(collectionFound);
 
-    const validate = generateSchemaCreatValidator(schema);
+    await this.prisma.$executeRaw(Prisma.sql([execute]));
 
-    try {
-      const data = validate.parse(fields);
+    const row = await this.prisma.$queryRaw(Prisma.sql([query]));
 
-      const columns = Object.keys(data);
-
-      const values = Object.values(data).map((v) => {
-        if (typeof v === 'number') return v;
-
-        return `'${v}'`;
-      });
-
-      const execute = `
-  INSERT INTO ${collectionFound.name} (collectionId, ${columns.join(',')})
-  VALUES
-  (${collectionFound.id},${values.join(',')})
-  `;
-
-      await this.prisma.$executeRaw(Prisma.sql([execute]));
-
-      const query = `SELECT * FROM ${collectionFound.name} ORDER BY created DESC LIMIT 1`;
-
-      const row = await this.prisma.$queryRaw(Prisma.sql([query]));
-
-      return row[0];
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    return row[0];
   }
 
   async deleteRecord(collection: string, id: number) {
-    const collectionFound = await this.prisma.collection.findUnique({
-      where: { name: collection },
-    });
+    const collectionFound = await this.findCollection(collection);
 
-    if (!collectionFound)
-      throw new HttpException('Collection not found', HttpStatus.BAD_REQUEST);
-
-    const remove = `UPDATE ${collectionFound.name} as ${
-      collectionFound.name
-    } SET deleted = '${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}' WHERE ${
-      collectionFound.name
-    }.id = ${id}`;
+    const remove = deleteRecordBuild(collectionFound, id);
 
     await this.prisma.$executeRaw(Prisma.sql([remove]));
 
-    const query = `SELECT * FROM ${collectionFound.name} as ${collectionFound.name} WHERE ${collectionFound.name}.id = ${id}`;
+    const query = getRecordBuild(collectionFound, id);
 
     const row = await this.prisma.$queryRaw(Prisma.sql([query]));
 
@@ -174,51 +104,23 @@ export class CollectionsService {
   }
 
   async updateRecord(collection: string, id: number, fields: unknown) {
-    const collectionFound = await this.prisma.collection.findUnique({
-      where: { name: collection },
-    });
+    const collectionFound = await this.findCollection(collection);
 
-    if (!collectionFound)
-      throw new HttpException('Collection not found', HttpStatus.BAD_REQUEST);
+    const findRecord = getRecordBuild(collectionFound, id);
 
-    const schema = collectionFound.schema as Prisma.JsonArray;
-
-    const query = `SELECT * FROM ${collectionFound.name} as ${collectionFound.name} WHERE ${collectionFound.name}.id = ${id}`;
-
-    const queryResult = await this.prisma.$queryRaw(Prisma.sql([query]));
+    const queryResult = await this.prisma.$queryRaw(Prisma.sql([findRecord]));
 
     if (Array.isArray(queryResult) && queryResult.length === 0)
       throw new HttpException('Record not found', HttpStatus.NOT_FOUND);
 
-    const validator = generateSchemaUpdateValidator(schema);
+    const execute = updateRecordBuild(collectionFound, id, fields);
 
-    try {
-      const data = validator.parse(fields);
+    await this.prisma.$executeRaw(Prisma.sql([execute]));
 
-      const fieldsUpdated = Object.keys(data).map((key) => {
-        return typeof data[key] === 'number'
-          ? `${collectionFound.name}.${key} = ${data[key]}`
-          : `${collectionFound.name}.${key} = '${data[key]}'`;
-      });
+    const query = getRecordBuild(collectionFound, id);
 
-      const execute = `
-  UPDATE ${collectionFound.name} as ${
-    collectionFound.name
-  } SET ${fieldsUpdated.join(', ')}, ${
-    collectionFound.name
-  }.updated = '${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}' WHERE ${
-    collectionFound.name
-  }.id = ${id}`;
+    const row = await this.prisma.$queryRaw(Prisma.sql([query]));
 
-      await this.prisma.$executeRaw(Prisma.sql([execute]));
-
-      const query = `SELECT * FROM ${collectionFound.name} WHERE ${collectionFound.name}.id = ${id}`;
-
-      const row = await this.prisma.$queryRaw(Prisma.sql([query]));
-
-      return row[0];
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    return row[0];
   }
 }
