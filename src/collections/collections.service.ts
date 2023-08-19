@@ -22,15 +22,20 @@ export class CollectionsService {
       where: { name: name },
     });
 
-    if (!collection)
-      throw new HttpException('Already exist collection', HttpStatus.CONFLICT);
+    if (collection === null)
+      throw new HttpException('Collection not exist', HttpStatus.NOT_FOUND);
 
     return collection;
   }
 
   async createTable(collection: Collection) {
-    await this.findCollection(collection.name);
+    const collectionFound = await this.prisma.collection.findFirst({
+      where: { name: collection.name },
+    });
 
+    if (collectionFound !== null)
+      throw new HttpException('Collection already exists', HttpStatus.CONFLICT);
+    
     const columns = assocColumnType(collection.schema);
 
     const executeRaw = newTableBuild(collection.name, columns);

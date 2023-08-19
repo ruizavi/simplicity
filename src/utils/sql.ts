@@ -43,21 +43,21 @@ export function newTableBuild(name: string, columns: string[]) {
 export function getRecordsBuild(collection: Collection) {
   const schema = collection.schema as Prisma.JsonArray;
 
-  const columns = schema.map((s) => `${collection}.${s['name']}`);
+  const columns = schema.map((s) => `${collection.name}.${s['name']}`);
 
   return `SELECT collectionId, id, created, updated, deleted, ${columns.join(
     ',',
-  )} FROM ${collection.name} AS ${collection}`;
+  )} FROM ${collection.name} AS ${collection.name}`;
 }
 
 export function getRecordBuild(collection: Collection, id: number) {
   const schema = collection.schema as Prisma.JsonArray;
 
-  const columns = schema.map((s) => `${collection}.${s['name']}`);
+  const columns = schema.map((s) => `${collection.name}.${s['name']}`);
 
   return `SELECT collectionId, id, created, updated, deleted, ${columns.join(
     ',',
-  )} FROM ${collection.name} AS ${collection} WHERE ${
+  )} FROM ${collection.name} AS ${collection.name} WHERE ${
     collection.name
   }.id = ${id}`;
 }

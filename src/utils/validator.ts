@@ -10,12 +10,13 @@ export const schemaTextValidator = (s: Schema, isUpdate: boolean) => {
     .min(s.options.min)
     .max(s.options.max);
 
-  if (s.options.regex !== undefined)
+  if (s.options.regex !== null)
     fieldValidator = fieldValidator.regex(new RegExp(s.options.regex));
 
   if (s.required && !isUpdate) {
     fieldValidator = fieldValidator.nonempty();
   } else {
+    console;
     fieldValidator = fieldValidator.optional();
   }
 
@@ -44,7 +45,7 @@ export const generateSchemaValidator = (
 ) => {
   let schemaShape = {};
 
-  schema.forEach((s) => {
+  for (let s of schema) {
     let fieldValidator: unknown;
 
     if (s.type === 'text') fieldValidator = schemaTextValidator(s, isUpdate);
@@ -52,7 +53,7 @@ export const generateSchemaValidator = (
       fieldValidator = schemaNumberValidator(s, isUpdate);
 
     schemaShape[s.name] = fieldValidator;
-  });
+  }
 
   return z.object(schemaShape);
 };

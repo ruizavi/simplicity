@@ -4,38 +4,38 @@ POST {{url}}/collections
 Content-Type: application/json
 
 {
-    "name": "spaces",
-    "schema": [
-        {
-            "name": "name",
-            "type": "text",
-            "options": {
-                "max": 50,
-                "min": 5,
-                "regex": "^[a-z\\s]*$",
-                "unique": false,
-                "required": true
-            }
-        },
-        {
-            "name": "first_name",
-            "type": "text",
-            "options": {
-                "max": 50,
-                "min": 0,
-                "unique": false,
-                "required": false
-            }
-        }
-    ]
-}   
+	"name": "spaces",
+	"schema": [{
+			"name": "name",
+			"type": "text",
+			"options": {
+				"max": 50,
+				"min": 5,
+				"regex": "^[a-z\\s]*$"
+			},
+			"unique": false,
+			"required": true
+		},
+		{
+			"name": "first_name",
+			"type": "text",
+			"options": {
+				"max": 50,
+				"min": 0,
+				"regex": null
+			},
+			"unique": false,
+			"required": false
+		}
+	]
+} 
 
 ###
 GET {{url}}/collections/spaces/records
 
 
 ###
-GET {{url}}/collections/spaces/records/3
+GET {{url}}/collections/spaces/records/2
 
 
 ###
