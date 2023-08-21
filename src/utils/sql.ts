@@ -47,7 +47,7 @@ export function getRecordsBuild(collection: Collection) {
 
   return `SELECT collectionId, id, created, updated, deleted, ${columns.join(
     ',',
-  )} FROM ${collection.name} AS ${collection.name}`;
+  )} FROM ${collection.name} AS ${collection.name} WHERE ${collection.name}.deleted IS NULL`;
 }
 
 export function getRecordBuild(collection: Collection, id: number) {
@@ -59,7 +59,7 @@ export function getRecordBuild(collection: Collection, id: number) {
     ',',
   )} FROM ${collection.name} AS ${collection.name} WHERE ${
     collection.name
-  }.id = ${id}`;
+  }.id = ${id} AND ${collection.name}.deleted IS NULL`;
 }
 
 export function createRecordBuild(collection: Collection, fields: unknown) {

@@ -4,7 +4,7 @@ POST {{url}}/collections
 Content-Type: application/json
 
 {
-	"name": "spaces",
+	"name": "test",
 	"schema": [{
 			"name": "name",
 			"type": "text",
@@ -31,23 +31,23 @@ Content-Type: application/json
 } 
 
 ###
-GET {{url}}/collections/spaces/records
+GET {{url}}/collections/test/records
 
 
 ###
-GET {{url}}/collections/spaces/records/2
+GET {{url}}/collections/test/records/1
 
 
 ###
-POST {{url}}/collections/spaces/records
+POST {{url}}/collections/test/records
 Content-Type: application/json
 
 {
-    "name": "adiossss"
+    "name": "adiossssteifubeskdfn"
 }
 
 ###
-PUT {{url}}/collections/spaces/records/2
+PUT {{url}}/collections/spaces/records/4
 Content-Type: application/json
 
 {
@@ -56,4 +56,4 @@ Content-Type: application/json
 }
 
 ###
-DELETE {{url}}/collections/test/records/5
+DELETE {{url}}/collections/test/records/1
