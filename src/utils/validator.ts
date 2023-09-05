@@ -1,4 +1,4 @@
-import { Schema } from 'src/types';
+import { NumberOption, Schema } from 'src/types';
 import { ZodNumber, ZodOptional, ZodString, z } from 'zod';
 import { instanceOfNumberType, instanceOfTextType } from './instanceOf';
 

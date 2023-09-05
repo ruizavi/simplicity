@@ -16,6 +16,7 @@ export type DecimalOption = NumberOption & {
 export type OptionsType = TextOption | NumberOption | DecimalOption;
 
 export interface Schema {
+  id: number;
   name: string;
   type: 'text' | 'number' | 'decimal';
   options: OptionsType;

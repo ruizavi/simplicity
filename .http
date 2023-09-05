@@ -4,7 +4,7 @@ POST {{url}}/collections
 Content-Type: application/json
 
 {
-	"name": "test",
+	"name": "numbers",
 	"schema": [{
 			"name": "name",
 			"type": "text",
@@ -17,12 +17,21 @@ Content-Type: application/json
 			"required": true
 		},
 		{
-			"name": "first_name",
-			"type": "text",
+			"name": "age",
+			"type": "number",
 			"options": {
-				"max": 50,
-				"min": 0,
-				"regex": null
+				"max": 120,
+				"min": 0
+			},
+			"unique": false,
+			"required": false
+		},
+		{
+			"name": "phone",
+			"type": "number",
+			"options": {
+				"max": 10,
+				"min": 10
 			},
 			"unique": false,
 			"required": false
@@ -31,7 +40,50 @@ Content-Type: application/json
 } 
 
 ###
-GET {{url}}/collections/test/records
+PUT {{url}}/collections/10
+Content-Type: application/json
+
+{
+   "name":"renamed",
+   "schema":[
+      {
+         "id":1,
+         "name":"name",
+         "type":"text",
+         "unique":false,
+         "options":{
+            "max":50,
+            "min":5,
+            "regex":"^[a-z\\s]*$"
+         },
+         "required":true
+      },
+      {
+         "id": 3,
+         "name":"field",
+         "type":"number",
+         "unique":false,
+         "options":{
+            "max":10,
+            "min":0
+         },
+         "required":true
+      },
+      {
+         "name":"field",
+         "type":"number",
+         "unique":false,
+         "options":{
+            "max":10,
+            "min":0
+         },
+         "required":true
+      }
+   ]
+}
+
+###
+GET {{url}}/collections/renamed/records
 
 
 ###
@@ -39,20 +91,22 @@ GET {{url}}/collections/test/records/1
 
 
 ###
-POST {{url}}/collections/test/records
+POST {{url}}/collections/testrenamed/records
 Content-Type: application/json
 
 {
-    "name": "adiossssteifubeskdfn"
+    "name": "victor",
+	"age": 21,
+	"newfield": 1
 }
 
 ###
-PUT {{url}}/collections/spaces/records/4
+PUT {{url}}/collections/numbers/records/1
 Content-Type: application/json
 
 {
     "name":"prueba para editar mas",
-    "first_name": "esta es la otra prueba"
+    "age": 18
 }
 
 ###

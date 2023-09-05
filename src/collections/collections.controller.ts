@@ -23,6 +23,14 @@ export class CollectionsController {
     return this.service.createTable(schema);
   }
 
+  @Put(':collectionId')
+  async editCollection(
+    @Param('collectionId', new ParseIntPipe()) collectionId: number,
+    @Body() collection: unknown,
+  ) {
+    return this.service.updateTable(collectionId, collection);
+  }
+
   @Get(':collection/records')
   async getRecords(@Param('collection') collection: string) {
     return this.service.getRecords(collection);
